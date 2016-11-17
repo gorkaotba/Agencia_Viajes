@@ -27,6 +27,18 @@ class AddConstraintValidatorsPass implements CompilerPassInterface
             if (isset($attributes[0]['alias'])) {
                 $validators[$attributes[0]['alias']] = $id;
             }
+
+            $definition = $container->getDefinition($id);
+
+            if (!$definition->isPublic()) {
+                throw new InvalidArgumentException(sprintf('The service "%s" must be public as it can be lazy-loaded.', $id));
+            }
+
+            if ($definition->isAbstract()) {
+                throw new InvalidArgumentException(sprintf('The service "%s" must not be abstract as it can be lazy-loaded.', $id));
+            }
+
+            $validators[$definition->getClass()] = $id;
         }
 
         $container->getDefinition('validator.validator_factory')->replaceArgument(1, $validators);

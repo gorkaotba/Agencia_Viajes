@@ -33,8 +33,6 @@ use Symfony\Component\Validator\Util\PropertyPath;
 /**
  * Recursive implementation of {@link ContextualValidatorInterface}.
  *
- * @since  2.5
- *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
 class RecursiveContextualValidator implements ContextualValidatorInterface
@@ -43,6 +41,16 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
      * @var ExecutionContextInterface
      */
     private $context;
+
+    /**
+     * @var string
+     */
+    private $defaultPropertyPath;
+
+    /**
+     * @var array
+     */
+    private $defaultGroups;
 
     /**
      * @var MetadataFactoryInterface

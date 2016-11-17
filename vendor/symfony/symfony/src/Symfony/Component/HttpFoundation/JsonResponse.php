@@ -27,7 +27,7 @@ class JsonResponse extends Response
     protected $data;
     protected $callback;
 
-    // Encode <, >, ', &, and " for RFC4627-compliant JSON, which may also be embedded into HTML.
+    // Encode <, >, ', &, and " characters in the JSON, making it also safe to be embedded into HTML.
     // 15 === JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
     protected $encodingOptions = 15;
 
@@ -50,7 +50,18 @@ class JsonResponse extends Response
     }
 
     /**
-     * {@inheritdoc}
+     * Factory method for chainability.
+     *
+     * Example:
+     *
+     *     return JsonResponse::create($data, 200)
+     *         ->setSharedMaxAge(300);
+     *
+     * @param mixed $data    The json response data
+     * @param int   $status  The response status code
+     * @param array $headers An array of response headers
+     *
+     * @return JsonResponse
      */
     public static function create($data = null, $status = 200, $headers = array())
     {
@@ -106,7 +117,7 @@ class JsonResponse extends Response
                     // PHP 5.3 triggers annoying warnings for some
                     // types that can't be serialized as JSON (INF, resources, etc.)
                     // but doesn't provide the JsonSerializable interface.
-                    set_error_handler('var_dump', 0);
+                    set_error_handler(function () { return false; });
                     $data = @json_encode($data, $this->encodingOptions);
                 } else {
                     // PHP 5.4 and up wrap exceptions thrown by JsonSerializable
@@ -142,7 +153,7 @@ class JsonResponse extends Response
         }
 
         if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \InvalidArgumentException($this->transformJsonError());
+            throw new \InvalidArgumentException(json_last_error_msg());
         }
 
         $this->data = $data;
@@ -195,32 +206,5 @@ class JsonResponse extends Response
         }
 
         return $this->setContent($this->data);
-    }
-
-    private function transformJsonError()
-    {
-        if (function_exists('json_last_error_msg')) {
-            return json_last_error_msg();
-        }
-
-        switch (json_last_error()) {
-            case JSON_ERROR_DEPTH:
-                return 'Maximum stack depth exceeded.';
-
-            case JSON_ERROR_STATE_MISMATCH:
-                return 'Underflow or the modes mismatch.';
-
-            case JSON_ERROR_CTRL_CHAR:
-                return 'Unexpected control character found.';
-
-            case JSON_ERROR_SYNTAX:
-                return 'Syntax error, malformed JSON.';
-
-            case JSON_ERROR_UTF8:
-                return 'Malformed UTF-8 characters, possibly incorrectly encoded.';
-
-            default:
-                return 'Unknown error.';
-        }
     }
 }
